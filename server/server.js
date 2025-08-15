@@ -1,18 +1,33 @@
-// backend/server.js
 const express = require("express");
+const ImageKit = require("imagekit");
 const cors = require("cors");
-require("dotenv").config(); // Load .env
+require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-
 app.use(cors());
-app.use(express.json());
 
-app.get("/api/message", (req, res) => {
-  res.json({ message: process.env.MESSAGE });
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
+app.get("/auth", (req, res) => {
+  const result = imagekit.getAuthenticationParameters();
+  res.send(result);
 });
+
+app.get("/files", async (req, res) => {
+  try {
+    const result = await imagekit.listFiles({
+      path: "Learnify",
+      sort: "DESC_CREATED"
+    });
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Server running on port " + PORT));
