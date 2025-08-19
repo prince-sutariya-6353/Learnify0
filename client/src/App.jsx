@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import PDFPreview from "./components/PDFPreview";
 
 function App() {
   const [file, setFile] = useState(null);
@@ -39,13 +40,12 @@ function App() {
       });
 
       const data = await res.json();
-
       if (data.url) {
         alert("Upload successful!");
+        setFile(null);
         fetchFiles();
       } else {
         alert("Upload failed.");
-        console.error(data);
       }
     } catch (err) {
       console.error("Upload error:", err);
@@ -58,27 +58,38 @@ function App() {
   }, []);
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Upload Image to "Learnify" Folder</h2>
-      <input type="file" onChange={(e) => setFile(e.target.files[0])} />
-      <button onClick={uploadFile}>Upload</button>
-
-      <h3>📁 Images in 'Learnify' Folder</h3>
-      <div style={{ display: "flex", flexWrap: "wrap" }}>
-        {images.map((file) => (
-          <img
-            key={file.fileId}
-            src={file.url}
-            alt={file.name}
-            style={{
-              maxHeight: 200,
-              maxWidth: 300,
-              margin: 10,
-              border: "2px solid #ccc",
-              borderRadius: 5,
-            }}
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+        <h1 className="text-2xl font-bold mb-4 text-center">📂 Upload & Preview Files</h1>
+        <div className="flex flex-col sm:flex-row gap-4 mb-6 justify-center">
+          <input
+            type="file"
+            onChange={(e) => setFile(e.target.files[0])}
+            className="w-full sm:w-auto border rounded px-4 py-2"
           />
-        ))}
+          <button
+            onClick={uploadFile}
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          >
+            Upload
+          </button>
+        </div>
+
+        <h2 className="text-xl font-semibold mb-4">🖼️ Preview</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {images.map((file) =>
+            file.name.toLowerCase().endsWith(".pdf") ? (
+              <PDFPreview key={file.fileId} url={file.url} />
+            ) : (
+              <img
+                key={file.fileId}
+                src={file.url}
+                alt={file.name}
+                className="rounded-lg border shadow-md max-h-64 object-contain"
+              />
+            )
+          )}
+        </div>
       </div>
     </div>
   );
