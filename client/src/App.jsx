@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from "react";
+import PDFPreview from "./components/PDFPreview";
 
 function App() {
   const [file, setFile] = useState(null);
   const [files, setFiles] = useState([]);
-<<<<<<< HEAD
-
-=======
->>>>>>> f63bde7 (first commit)
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const imagekitPublicKey = import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY;
 
@@ -38,13 +35,12 @@ function App() {
         body: formData,
       });
       const data = await res.json();
-
       if (data.url) {
         alert("Upload successful!");
+        setFile(null);
         fetchFiles();
       } else {
         alert("Upload failed.");
-        console.error(data);
       }
     } catch (err) {
       console.error("Upload error:", err);
@@ -56,56 +52,6 @@ function App() {
     fetchFiles();
   }, []);
 
-<<<<<<< HEAD
-  // Helper function to render files
-  const renderFile = (file) => {
-    const ext = file.name.split(".").pop().toLowerCase();
-
-    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
-      return (
-        <img
-          src={file.url}
-          alt={file.name}
-          style={{
-            maxHeight: 200,
-            maxWidth: 300,
-            margin: 10,
-            border: "2px solid #ccc",
-            borderRadius: 5,
-          }}
-        />
-      );
-    } else if (ext === "pdf") {
-      return (
-        <div style={{ margin: 10 }}>
-          {/* PDF Preview */}
-          <embed
-            src={file.url}
-            type="application/pdf"
-            width="300"
-            height="200"
-            style={{
-              border: "2px solid #ccc",
-              borderRadius: 5,
-              display: "block",
-              marginBottom: 5,
-            }}
-          />
-          {/* Download Link */}
-          <a
-            href={file.url}
-            download={file.name}
-            style={{
-              textDecoration: "none",
-              background: "#007bff",
-              color: "#fff",
-              padding: "5px 10px",
-              borderRadius: "5px",
-            }}
-          >
-            ⬇ Download PDF
-          </a>
-=======
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-lg">
@@ -153,34 +99,7 @@ function App() {
               </div>
             );
           })}
->>>>>>> f63bde7 (first commit)
         </div>
-      );
-    } else {
-      return (
-        <a
-          href={file.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ margin: 10 }}
-        >
-          📄 {file.name}
-        </a>
-      );
-    }
-  };
-
-  return (
-    <div style={{ padding: 20 }}>
-      <h2>Upload File to "Learnify" Folder</h2>
-      <input type="file" onChange={(e) => setFile(e.target.files[0])} />
-      <button onClick={uploadFile}>Upload</button>
-
-      <h3>📁 Files in 'Learnify' Folder</h3>
-      <div style={{ display: "flex", flexWrap: "wrap" }}>
-        {files.map((file) => (
-          <div key={file.fileId}>{renderFile(file)}</div>
-        ))}
       </div>
     </div>
   );
