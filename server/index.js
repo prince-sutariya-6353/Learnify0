@@ -11,7 +11,7 @@ const User = require("./models/User");
 dotenv.config();
 const app = express();
 const corsOptions = {
-  origin: ['https://learnify0-nfmn.vercel.app', 'https:localhost:5173'],
+  origin: ['https://learnify0-nfmn.vercel.app'],
   methods: ['GET','HEAD','PUT','PATCH','POST','DELETE'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Auth-Token', 'Origin'],
