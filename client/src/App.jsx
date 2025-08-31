@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PDFPreview from "./components/PDFPreview";
 import Signup from "./pages/Signup";
+import Login from "./pages/Login";
 
 function App() {
   const [file, setFile] = useState(null);
@@ -130,6 +131,7 @@ function App() {
         </div>
       </div>
           <Signup />
+          <Login />
     </div>
 
   );
