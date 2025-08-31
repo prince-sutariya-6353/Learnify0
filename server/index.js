@@ -10,9 +10,16 @@ const User = require("./models/User");
 
 dotenv.config();
 const app = express();
+const corsOptions = {
+  origin: ['https://learnify0-nfmn.vercel.app'],
+  methods: ['GET','HEAD','PUT','PATCH','POST','DELETE'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Auth-Token', 'Origin'],
+  optionsSuccessStatus: 200
+};
 
+app.use(cors(corsOptions));
 app.use(express.json());
-app.use(cors());
 
 // ========== MongoDB Setup ==========
 mongoose.connect(process.env.MONGO_URI, {
