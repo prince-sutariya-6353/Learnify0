@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const handleLogin = async () => {
@@ -18,7 +18,7 @@ function Login() {
 
       if (data.token) {
         localStorage.setItem("token", data.token);
-        navigate("/preview");
+        alert("Login success :)");
       } else {
         alert(data.error || "Login failed");
       }
@@ -46,14 +46,14 @@ function Login() {
           onChange={(e) => setPassword(e.target.value)}
         />
         <button
-          onClick={handleLogin}
+          onClick={() => handleLogin()}
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
         >
           Login
         </button>
         <p
           className="text-center text-sm text-gray-500 mt-4 cursor-pointer"
-          onClick={() => navigate("/signup")}
+          // onClick={() => navigate("/signup")}
         >
           Don't have an account? Signup
         </p>
