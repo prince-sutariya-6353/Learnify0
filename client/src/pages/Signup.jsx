@@ -10,7 +10,8 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/signup", form);
+      await axios.post("https://learnify0.vercel.app/", form);
+      // await axios.post("http://localhost:5000/signup", form);
       alert("Signup successful! You can now login.");
     } catch (err) {
       alert(err.response?.data?.msg || "Error");
