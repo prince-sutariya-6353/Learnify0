@@ -1,44 +1,29 @@
-import React, { useState } from "react";
+import React from "react";
+import { useState } from "react";
+import axios from "axios";
 
 function Signup() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        alert("Signup successful ✅");
-        localStorage.setItem("token", data.token); // store JWT
-        window.location.href = "/preview"; // redirect to preview page
-      } else {
-        alert(data.error || "Signup failed ❌");
-      }
+      await axios.post("http://localhost:5000/signup", form);
+      alert("Signup successful! You can now login.");
     } catch (err) {
-      console.error(err);
-      alert("Something went wrong");
+      alert(err.response?.data?.msg || "Error");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input type="text" name="name" placeholder="Name" onChange={handleChange} />
-      <input type="email" name="email" placeholder="Email" onChange={handleChange} />
-      <input type="password" name="password" placeholder="Password" onChange={handleChange} />
-      <button type="submit">Signup</button>
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-md w-80">
+      <h2 className="text-2xl font-bold mb-4">Signup</h2>
+      <input type="text" name="name" placeholder="Name" className="border p-2 mb-3 w-full rounded" onChange={handleChange} />
+      <input type="email" name="email" placeholder="Email" className="border p-2 mb-3 w-full rounded" onChange={handleChange} />
+      <input type="password" name="password" placeholder="Password" className="border p-2 mb-3 w-full rounded" onChange={handleChange} />
+      <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded w-full">Signup</button>
     </form>
   );
 }
