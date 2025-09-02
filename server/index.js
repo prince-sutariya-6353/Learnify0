@@ -6,43 +6,51 @@ const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const ImageKit = require("imagekit");
-const User = require("./models/User");
+const User = require("./models/User"); // ✅ Make sure you have User schema
 
 dotenv.config();
-const app = express();
-const corsOptions = {
-  origin: ['https://learnify0-nfmn.vercel.app', 'https://localhost:5173'],
-  methods: ['GET','HEAD','PUT','PATCH','POST','DELETE'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Auth-Token', 'Origin'],
-  optionsSuccessStatus: 200
-};
 
+const app = express();
+
+// ✅ CORS setup
+const corsOptions = {
+  origin: [
+    "https://learnify0-nfmn.vercel.app", // frontend deployed
+    "http://localhost:5173"              // local dev
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization", "X-Auth-Token", "Origin"],
+};
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// ========== MongoDB Setup ==========
+// ✅ MongoDB Setup
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => console.log("✅ MongoDB Connected"))
-.catch(err => console.log("❌ MongoDB Error:", err));
+.catch(err => console.error("❌ MongoDB Error:", err));
 
-// ========== ImageKit Setup ==========
+// ✅ ImageKit Setup
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
 
-// ========== Auth Routes ==========
+// ================= AUTH ROUTES =================
+
+// Signup
 app.post("/signup", async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
     const existing = await User.findOne({ email });
-    if (existing) return res.status(409).json({ message: "User already exists" });
+    if (existing) {
+      return res.status(409).json({ message: "User already exists" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ name, email, password: hashedPassword });
@@ -50,13 +58,15 @@ app.post("/signup", async (req, res) => {
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Signup error:", err);
     res.status(500).json({ message: "Server error during signup" });
   }
 });
 
+// Login
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
+
   try {
     let user = await User.findOne({ email });
     if (!user) return res.status(400).json({ msg: "User not found" });
@@ -64,32 +74,48 @@ app.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+    res.json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email }
+    });
   } catch (err) {
+    console.error("❌ Login error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ========== ImageKit Routes ==========
-app.get("/auth", (req, res) => {
-  const result = imagekit.getAuthenticationParameters();
-  res.send(result);
-});
+// ================= IMAGEKIT ROUTES =================
 
-app.get("/files", async (req, res) => {
+// Authentication (for frontend uploads)
+app.get("/auth", (req, res) => {
   try {
-    const result = await imagekit.listFiles({
-      path: "Learnify",   // 👈 change this to your folder name in ImageKit
-      sort: "DESC_CREATED",
-    });
+    const result = imagekit.getAuthenticationParameters();
     res.send(result);
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
 });
 
-// ========== Start Server ==========
+// List files from "Learnify" folder
+app.get("/files", async (req, res) => {
+  try {
+    const result = await imagekit.listFiles({
+      path: "Learnify",
+      sort: "DESC_CREATED",
+    });
+    res.send(result);
+  } catch (error) {
+    console.error("❌ ImageKit error:", error);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// ================= START SERVER =================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
