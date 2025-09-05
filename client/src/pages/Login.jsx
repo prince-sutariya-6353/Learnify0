@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function Login() {
+function Login({ setIsAuthenticated }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // const navigate = useNavigate();
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
@@ -18,12 +18,15 @@ function Login() {
 
       if (data.token) {
         localStorage.setItem("token", data.token);
-        alert("Login success :)");
+        setIsAuthenticated(true);
+        alert("Login success ✅");
+        navigate("/preview");
       } else {
         alert(data.error || "Login failed");
       }
     } catch (err) {
       console.error("Login error:", err);
+      alert("Something went wrong");
     }
   };
 
@@ -46,14 +49,14 @@ function Login() {
           onChange={(e) => setPassword(e.target.value)}
         />
         <button
-          onClick={() => handleLogin()}
+          onClick={handleLogin}
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
         >
           Login
         </button>
         <p
           className="text-center text-sm text-gray-500 mt-4 cursor-pointer"
-          // onClick={() => navigate("/signup")}
+          onClick={() => navigate("/signup")}
         >
           Don't have an account? Signup
         </p>

@@ -119,7 +119,7 @@ function Preview() {
                 </p>
               </div>
             );
-          })}   
+          })}
         </div>
       </div>
     </div>
