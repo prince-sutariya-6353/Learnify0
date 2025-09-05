@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Header from "../components/Header";
 import PDFPreview from "../components/PDFPreview";
 
@@ -7,6 +7,8 @@ function Preview() {
   const [files, setFiles] = useState([]);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const imagekitPublicKey = import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY;
+
+  const fileInputRef = useRef(null); // 👈 ref for input
 
   const fetchFiles = async () => {
     try {
@@ -42,6 +44,7 @@ function Preview() {
       if (data.url) {
         alert("Upload successful!");
         setFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = ""; // 👈 reset input
         fetchFiles();
       } else {
         alert("Upload failed.");
@@ -65,6 +68,7 @@ function Preview() {
         <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center">
           <input
             type="file"
+            ref={fileInputRef} // 👈 attach ref
             onChange={(e) => setFile(e.target.files[0])}
             className="w-full sm:w-auto border rounded px-4 py-2"
           />
