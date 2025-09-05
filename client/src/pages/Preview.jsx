@@ -5,24 +5,37 @@ import PDFPreview from "../components/PDFPreview";
 function Preview() {
   const [file, setFile] = useState(null);
   const [files, setFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [inputVersion, setInputVersion] = useState(0); // force-remount input
+  const fileInputRef = useRef(null);
+
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const imagekitPublicKey = import.meta.env.VITE_IMAGEKIT_PUBLIC_KEY;
-
-  const fileInputRef = useRef(null); // 👈 ref for input
 
   const fetchFiles = async () => {
     try {
       const res = await fetch(`${backendUrl}/files`);
       const data = await res.json();
-      setFiles(data);
+      setFiles(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error fetching files:", err);
     }
   };
 
-  const uploadFile = async () => {
-    if (!file) return alert("Please select a file!");
+  const resetFileInput = () => {
+    setFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    // in some browsers ref reset isn't enough — bump the key to remount input
+    setInputVersion(v => v + 1);
+  };
+
+  const uploadFile = async (e) => {
+    e?.preventDefault?.(); // in case this is inside a form
+    if (!file || isUploading) return;
+
     try {
+      setIsUploading(true);
+
       const authRes = await fetch(`${backendUrl}/auth`);
       const auth = await authRes.json();
 
@@ -41,17 +54,20 @@ function Preview() {
       });
       const data = await res.json();
 
-      if (data.url) {
+      if (data?.url) {
+        // optional: toast instead of alert to avoid blocking UI
+        // but keeping alert as you had:
         alert("Upload successful!");
-        setFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = ""; // 👈 reset input
-        fetchFiles();
+        resetFileInput();
+        await fetchFiles(); // refresh grid
       } else {
         alert("Upload failed.");
       }
     } catch (err) {
       console.error("Upload error:", err);
       alert("Upload error.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -67,16 +83,21 @@ function Preview() {
         {/* Upload Section */}
         <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center items-center">
           <input
+            key={inputVersion}           // force-remount when version changes
             type="file"
-            ref={fileInputRef} // 👈 attach ref
-            onChange={(e) => setFile(e.target.files[0])}
+            ref={fileInputRef}
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="w-full sm:w-auto border rounded px-4 py-2"
           />
           <button
+            type="button"                // <- important: avoid form submit
             onClick={uploadFile}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+            disabled={!file || isUploading}
+            className={`px-6 py-2 rounded text-white ${
+              isUploading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
-            Upload
+            {isUploading ? "Uploading..." : "Upload"}
           </button>
         </div>
 
@@ -92,15 +113,8 @@ function Preview() {
 
             if (name.endsWith(".mp4")) {
               return (
-                <div
-                  key={file.fileId}
-                  className="border rounded-lg shadow-md overflow-hidden bg-black"
-                >
-                  <video
-                    controls
-                    className="w-full h-64 object-contain p-2"
-                    src={file.url}
-                  />
+                <div key={file.fileId} className="border rounded-lg shadow-md overflow-hidden bg-black">
+                  <video controls className="w-full h-64 object-contain p-2" src={file.url} />
                   <p className="text-center py-2 text-sm text-gray-300 bg-gray-800 truncate">
                     {file.name}
                   </p>
@@ -109,18 +123,9 @@ function Preview() {
             }
 
             return (
-              <div
-                key={file.fileId}
-                className="border rounded-lg shadow-md overflow-hidden bg-white"
-              >
-                <img
-                  src={file.url}
-                  alt={file.name}
-                  className="w-full h-64 object-contain p-2"
-                />
-                <p className="text-center py-2 text-sm text-gray-700 truncate">
-                  {file.name}
-                </p>
+              <div key={file.fileId} className="border rounded-lg shadow-md overflow-hidden bg-white">
+                <img src={file.url} alt={file.name} className="w-full h-64 object-contain p-2" />
+                <p className="text-center py-2 text-sm text-gray-700 truncate">{file.name}</p>
               </div>
             );
           })}
