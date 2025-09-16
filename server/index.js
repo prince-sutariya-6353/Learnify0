@@ -6,8 +6,7 @@ const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const ImageKit = require("imagekit");
-const User = require("./models/User"); // ✅ User schema
-const { OAuth2Client } = require("google-auth-library");
+const User = require("./models/User"); // ✅ Make sure you have User schema
 
 dotenv.config();
 
@@ -16,8 +15,8 @@ const app = express();
 // ✅ CORS setup
 const corsOptions = {
   origin: [
-    "https://learnify0-nfmn.vercel.app", // deployed frontend
-    "http://localhost:5173",             // local dev
+    "https://learnify0-nfmn.vercel.app", // frontend deployed
+    "http://localhost:5173"              // local dev
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   credentials: true,
@@ -26,23 +25,20 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// ✅ MongoDB setup
+// ✅ MongoDB Setup
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => console.log("✅ MongoDB Connected"))
-.catch((err) => console.error("❌ MongoDB Error:", err));
+.catch(err => console.error("❌ MongoDB Error:", err));
 
-// ✅ ImageKit setup
+// ✅ ImageKit Setup
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
-
-// ✅ Google OAuth2 client
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // ================= AUTH ROUTES =================
 
@@ -67,80 +63,36 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-// Login (email/password)
+// Login
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    if (!email || !password) {
-      return res.status(400).json({ msg: "Email and password required" });
-    }
-
-    const user = await User.findOne({ email }).select("+password");
+    let user = await User.findOne({ email });
     if (!user) return res.status(400).json({ msg: "User not found" });
-
-    if (!user.password) {
-      return res.status(400).json({
-        msg: "This account was created with Google. Use Google Sign-In.",
-      });
-    }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
 
     res.json({
       token,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email }
     });
   } catch (err) {
     console.error("❌ Login error:", err);
-    res.status(500).json({ error: "Server error during login" });
-  }
-});
-
-// ✅ Google Login
-app.post("/api/auth/google", async (req, res) => {
-  try {
-    const { credential } = req.body;
-
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-
-    const { sub, email, name } = payload;
-
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = new User({
-        name,
-        email,
-        password: "", // no password for Google users
-        googleId: sub,
-      });
-      await user.save();
-    }
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-
-    res.json({
-      token,
-      user: { id: user._id, name: user.name, email: user.email },
-    });
-  } catch (err) {
-    console.error("❌ Google login error:", err);
-    res.status(500).json({ error: "Google authentication failed" });
+    res.status(500).json({ error: err.message });
   }
 });
 
 // ================= IMAGEKIT ROUTES =================
+
+// Authentication (for frontend uploads)
 app.get("/auth", (req, res) => {
   try {
     const result = imagekit.getAuthenticationParameters();
@@ -150,6 +102,7 @@ app.get("/auth", (req, res) => {
   }
 });
 
+// List files from "Learnify" folder
 app.get("/files", async (req, res) => {
   try {
     const result = await imagekit.listFiles({

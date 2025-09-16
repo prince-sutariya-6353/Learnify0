@@ -94,7 +94,7 @@ function Preview() {
             onClick={uploadFile}
             disabled={!file || isUploading}
             className={`px-6 py-2 rounded text-white ${
-              isUploading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+              isUploading ? "bg-blue-600 cursor-not-allowed" : "bg-red-600 hover:bg-blue-700"
             }`}
           >
             {isUploading ? "Uploading..." : "Upload"}
