@@ -10,27 +10,29 @@ function App() {
   );
 
   return (
-    <Routes>
-      {/* Default → Signup */}
-      <Route path="/" element={<Navigate to="/signup" />} />
+    <>
+      <Routes>
+        {/* Default → Signup */}
+        <Route path="/" element={<Navigate to="/signup" />} />
 
-      {/* Signup Page */}
-      <Route path="/signup" element={<Signup />} />
+        {/* Signup Page */}
+        <Route path="/signup" element={<Signup />} />
 
-      {/* Login Page */}
-      <Route
-        path="/login"
-        element={<Login setIsAuthenticated={setIsAuthenticated} />}
-      />
+        {/* Login Page */}
+        <Route
+          path="/login"
+          element={<Login setIsAuthenticated={setIsAuthenticated} />}
+        />
 
-      {/* Protected Upload & Preview */}
-      <Route
-        path="/preview"
-        element={
-          isAuthenticated ? <Preview /> : <Navigate to="/login" replace />
-        }
-      />
-    </Routes>
+        {/* Protected Upload & Preview */}
+        <Route
+          path="/preview"
+          element={
+            isAuthenticated ? <Preview /> : <Navigate to="/login" replace />
+          }
+        />
+      </Routes>
+    </>
   );
 }
 
