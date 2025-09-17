@@ -30,10 +30,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// ✅ Fix COOP/COEP headers to allow Google login popups
+// ✅ Fix COOP/COEP headers (skip for Google login)
 app.use((req, res, next) => {
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+  if (req.path.startsWith("/google-login") || req.path.startsWith("/auth")) {
+    return next(); // allow postMessage for Google popup
+  }
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
   next();
 });
 
