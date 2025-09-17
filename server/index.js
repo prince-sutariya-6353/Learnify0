@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const ImageKit = require("imagekit");
-const User = require("./models/User"); // ✅ User Schema
+const User = require("./models/User");
 
 const { OAuth2Client } = require("google-auth-library");
 const crypto = require("crypto");
@@ -25,31 +25,19 @@ const corsOptions = {
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization", "X-Auth-Token", "Origin"],
 };
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// ✅ Fix COOP/COEP headers (skip for Google login)
-app.use((req, res, next) => {
-  if (req.path.startsWith("/google-login") || req.path.startsWith("/auth")) {
-    return next(); // allow postMessage for Google popup
-  }
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-  next();
-});
+// 🚫 REMOVE Cross-Origin-Opener-Policy headers completely
+// (Google login needs window.postMessage, which these headers block)
 
-// ✅ MongoDB Setup
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+// ================== MongoDB ==================
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ MongoDB Error:", err));
 
-// ✅ ImageKit Setup
+// ================== ImageKit ==================
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
@@ -71,7 +59,6 @@ app.post("/signup", async (req, res) => {
 
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
-    console.error("❌ Signup error:", err);
     res.status(500).json({ message: "Server error during signup" });
   }
 });
@@ -86,13 +73,10 @@ app.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
     res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
   } catch (err) {
-    console.error("❌ Login error:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -124,19 +108,15 @@ app.post("/google-login", async (req, res) => {
       await user.save();
     }
 
-    // create JWT
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
     res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
   } catch (err) {
-    console.error("❌ Google login error:", err);
     res.status(500).json({ message: "Google auth failed", error: err.message });
   }
 });
 
 // ================== IMAGEKIT ROUTES ==================
-
-// Authentication (for frontend uploads)
 app.get("/auth", (req, res) => {
   try {
     const result = imagekit.getAuthenticationParameters();
@@ -146,7 +126,6 @@ app.get("/auth", (req, res) => {
   }
 });
 
-// List files from "Learnify" folder
 app.get("/files", async (req, res) => {
   try {
     const result = await imagekit.listFiles({
@@ -155,7 +134,6 @@ app.get("/files", async (req, res) => {
     });
     res.send(result);
   } catch (error) {
-    console.error("❌ ImageKit error:", error);
     res.status(500).send({ error: error.message });
   }
 });
